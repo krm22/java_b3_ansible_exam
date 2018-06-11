@@ -1,0 +1,6 @@
+---
+- hosts: lxcServerContainer
+  roles:
+    - wildfly
+
+

@@ -1,0 +1,107 @@
+#javaDevOpsCiPlaybook.yml
+
+---
+- hosts: lxcServerContainer
+  roles:
+    - wildfly-server
+
+
+#javaDevOpsCiInventory.ini
+
+[lxcServerContainer]
+10.117.29.101
+
+
+
+tasks/main.yml
+
+
+
+- name: jdk8 installation
+  package: name=openjdk-8-jdk-headless state=present
+
+- name: Creation of wildfly user
+  user:
+    name: '{{wildflyUserName}}'
+    shell: /bin/dalse
+    system: yes
+    home: '{{wildflyHomePath}}'
+
+- name: Verify /etc/wildfly folder exists
+  file:
+    path: '{{wildflyEtcPath}}'
+    owner: '{{wildflyUserName}}'
+    state: directory
+    recurse: yes
+
+- name: Download and extraction of wildfly archive
+  unarchive:
+    src: '{{wildflyUrlPath}}'
+    dest: '{{wildflyHomePath}}'
+    owner: '{{wildflyUserName}}'
+    remote_src: yes
+    creates: '{{wildflyPath}}'
+
+- name: File path creation
+  file:
+    src: '{{wildflyPath}}'
+    dest: '{{wildflyOptPath}}'
+    owner: '{{wildflyUserName}}'
+    state: link
+
+- name: Copy configuration file from wildfly  
+  copy:
+    src: '{{wildflyConfPath}}'
+    dest: '{{wildflyEtcPath}}'
+    owner: '{{wildflyUserName}}'
+    remote_src: yes
+
+- name: Copy service file from wildfly
+  copy:
+    src: '{{wildflyServicePath}}'
+    dest: '{{systemdPath}}'
+    owner: '{{wildflyUserName}}'
+    remote_src: yes
+
+- name: Copie launcher file from wildfly
+  copy:
+    src: '{{wildflyLaunchPath}}'
+    dest: '{{wildflyBinPath}}'
+    owner: '{{wildflyUserName}}'clear
+    mode: 0755
+    remote_src: yes
+
+- name: Start wildfly server
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: wildfly
+
+
+
+
+  wildflyUserName: 'wildfly'
+  wildflyOptPath: '/opt/wildfly'
+  wildflyEtcPath: '/etc/wildfly'
+  wildflyHomePath: '/home/wildfly'
+  wildflyPath: '{{wildflyHomePath}}/wildfly-11.0.0.Final'
+  wildflyBinPath: '{{wildflyPath}}/bin'
+  wildflySystemdPath: '{{wildflyPath}}/docs/contrib/scripts/systemd'
+  wildflyConfPath: '{{wildflySystemdPath}}/wildfly.conf'
+  wildflyServicePath: '{{wildflySystemdPath}}/wildfly.service'
+  wildflyLaunchPath: '{{wildflySystemdPath}}/launch.sh'
+  wildflyUrlPath: 'http://download.jboss.org/wildfly/11.0.0.Final/wildfly-11.0.0.Final.tar.gz'
+  systemdPath: '/etc/systemd/system/'
+
+
+
+
+
+
+
+
+
+
+
+
+
